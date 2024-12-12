@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deprem Aktivitesi Haritası</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="csskodlari/style.css" />
+    
+
+    
+    
+</head>
+<body>
+
+    
+
+    <!-- Navbar Kullanım Kodu -->
+    <header>
+        <div class="companyBar">
+            <a href="#" class="logo">Deprem Aktivite Haritası</a>
+            <div id="depremLogo">
+                <img src="image/resim2.jpg" alt="">
+            </div>
+        </div>
+
+        <input type="checkbox" id="menu-bar">
+        <label for="menu-bar"><span id="menuicon" class="material-symbols-outlined">menu</span></label>
+
+        <!--Sayfa Yönlendirmeleri-->
+        <nav class="navbar">
+            <ul>
+                <li><a href="index.html">Anasayfa</a></li>
+                <li><a href="deprem_listesi.html">Deprem Listesi</a></li>
+                <li><a href="aboutMe.html">Hakkımızda</a></li>
+                <li><a href="iletisim.html">İletişim</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Sabit başlık alanı -->
+    <div class="header">
+        <div class="low">Düşük Şiddet (0.0 - 4.0)</div>
+        <div class="medium">Orta Şiddet (4.0 - 5.9)</div>
+        <div class="high">Yüksek Şiddet (6.0+)</div>
+    </div>
+
+  
+
+    <!-- Filtreleme Butonu -->
+<button class="filter-button" onclick="toggleFilter()">☰</button>
+
+<!-- Filtreleme Paneli -->
+<div class="filter-panel" id="filterPanel">
+    <button class="close-btn" onclick="toggleFilter()">X</button>
+    <div class="filter-content">
+        <label for="magnitude-range">Büyüklük Aralığı:</label>
+        <select id="magnitude-range">
+            <option value="all">Tümü</option>
+            <option value="low">0.0 - 3.9 (Düşük)</option>
+            <option value="medium">4.0 - 5.9 (Orta)</option>
+            <option value="high">6.0+ (Yüksek)</option>
+        </select>
+
+        <label for="location">Şehir:</label>
+        <input type="text" id="location" placeholder="Şehir adı girin">
+
+        <button id="filter-button" onclick="applyFilter()">Filtrele</button>
+        <button id="reset-button" onclick="resetFilter()">Sıfırla</button> <!-- Sıfırla butonu -->
+    </div>
+</div>
+
+
+    <!-- Harita -->
+     <div id="map" style="margin-top: 80px;"></div> 
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Haritayı oluşturun ve başlangıç pozisyonunu belirleyin
+        var map = L.map('map').setView([39.9334, 32.8597], 6); // Türkiye koordinatları
+
+        // Harita katmanı için OpenStreetMap kullanın
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Deprem verilerini çekmek için bir API örneği
+        let earthquakeData = [
+        { lat: 38.9637, lon: 35.2433, magnitude: 3.5, location: "Ankara", date: "2024-12-01" },
+        { lat: 37.0662, lon: 37.3833, magnitude: 5.2, location: "Gaziantep", date: "2024-12-02" },
+        { lat: 40.9833, lon: 29.1167, magnitude: 6.3, location: "İstanbul", date: "2024-12-03" }
+        ];
+
+        let markers = [];
+
+        // Her bir depremi haritaya işaretleyin
+        function addEarthquakeMarkers(data) {
+            data.forEach(function (quake) {
+                let color = quake.magnitude >= 6 ? 'red' :
+                            quake.magnitude >= 4 ? 'orange' : 'yellow';
+                let marker = L.circle([quake.lat, quake.lon], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.5,
+                    radius: quake.magnitude * 10000
+                }).addTo(map)
+                  .bindPopup(`<b>${quake.location}</b><br>Magnitude: ${quake.magnitude}`);
+                markers.push(marker);
+            });
+        }
+
+        // Başlangıçta verileri haritaya ekleyin
+        addEarthquakeMarkers(earthquakeData);
+
+        // Filtreleme panelini açıp kapatacak fonksiyon
+        function toggleFilter() {
+            const panel = document.getElementById('filterPanel');
+            panel.classList.toggle('open');
+        }
+
+        // Filtreleme işlemini uygulayacak fonksiyon
+        function applyFilter() {
+            const magnitudeRange = document.getElementById('magnitude-range').value;
+            const location = document.getElementById('location').value.toLowerCase();
+            
+            // Mevcut tüm işaretçileri haritadan kaldır
+            markers.forEach(function(marker) {
+                map.removeLayer(marker);
+            });
+            markers = [];
+
+            // Filtreyi uygulayın
+            const filteredData = earthquakeData.filter(function (quake) {
+                const matchesMagnitude = (magnitudeRange === 'all') ||
+                    (magnitudeRange === 'low' && quake.magnitude < 4) ||
+                    (magnitudeRange === 'medium' && quake.magnitude >= 4 && quake.magnitude < 6) ||
+                    (magnitudeRange === 'high' && quake.magnitude >= 6);
+
+                const matchesLocation = location === '' || quake.location.toLowerCase().includes(location);
+
+                return matchesMagnitude && matchesLocation;
+            });
+
+            // Filtrelenmiş veriyi haritaya ekleyin
+            addEarthquakeMarkers(filteredData);
+        }
+    </script>
+
+    
+    <script src="jskodlari/all.js"></script>
+    
+    
+</body>
+</html>
